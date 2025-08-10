@@ -1,0 +1,36 @@
+name: Deploy Master Proxy
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Sync Files to Server
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          SOURCE: "./"
+          TARGET: "~/master-proxy-infra"
+          EXCLUDE: "/.github/, /.git/"
+
+      - name: Restart Master Proxy on Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd ~/master-proxy-infra
+            echo "Master proxy files synced. Ensuring service is up..."
+            # This will recreate the proxy only if the config or image has changed.
+            docker compose up -d
+            echo "Master proxy is running."
