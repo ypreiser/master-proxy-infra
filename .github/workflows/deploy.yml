@@ -1,8 +1,15 @@
+# C:\master-proxy-infra\.github\workflows\deploy.yml
+
 name: Deploy Master Proxy
 
 on:
   push:
     branches: ["master"]
+  # Add a schedule to run this workflow automatically once a week
+  schedule:
+    - cron: "0 0 * * 1" # Runs every Monday at midnight UTC
+  # Allow manual runs from the Actions tab
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -21,7 +28,7 @@ jobs:
           TARGET: "~/master-proxy-infra"
           EXCLUDE: "/.github/, /.git/"
 
-      - name: Restart Master Proxy on Server
+      - name: Configure Server and Restart Proxy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -30,7 +37,14 @@ jobs:
           script: |
             set -e
             cd ~/master-proxy-infra
-            echo "Master proxy files synced. Ensuring service is up..."
-            # This will recreate the proxy only if the config or image has changed.
+
+            # --- NEW: Secure the firewall ---
+            echo "Updating firewall to allow Cloudflare IPs..."
+            # Make the script executable and run it with sudo
+            chmod +x ./update-cloudflare-ips.sh
+            sudo ./update-cloudflare-ips.sh
+            echo "✅ Firewall configuration updated."
+
+            echo "Ensuring master proxy service is up..."
             docker compose up -d
             echo "Master proxy is running."
