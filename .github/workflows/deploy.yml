@@ -41,8 +41,8 @@ jobs:
             # --- NEW: Secure the firewall ---
             echo "Updating firewall to allow Cloudflare IPs..."
             # Make the script executable and run it with sudo
-            chmod +x ./update-cloudflare-ips.sh
-            sudo ./update-cloudflare-ips.sh
+            chmod +x ./update-firewall.sh
+            sudo ./update-firewall.sh
             echo "✅ Firewall configuration updated."
 
             echo "Ensuring master proxy service is up..."
