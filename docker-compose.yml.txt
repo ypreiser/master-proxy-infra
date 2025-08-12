@@ -4,7 +4,6 @@
 networks:
   master_proxy_network:
     external: true
-
 services:
   master-proxy:
     image: nginx:alpine
@@ -12,10 +11,10 @@ services:
     restart: always
     ports:
       - "80:80"
-      - "443:443" # We'll set up SSL later, but reserve the port.
+      - "443:443" # Make sure this port is published
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      # This volume is for SSL certificates (e.g., from Let's Encrypt)
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # --- ADD THIS LINE TO MOUNT THE CERTIFICATES ---
+      - ./certs:/etc/nginx/certs:ro
     networks:
       - master_proxy_network

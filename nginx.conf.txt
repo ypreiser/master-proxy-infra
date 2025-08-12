@@ -13,13 +13,12 @@ http {
 
     # --- Server Block for handling all secure traffic ---
     server {
-        listen 443 ssl; # Listen on the secure port
+        listen 443 ssl;
         server_name chatdemo.levor.io labs.levor.io;
 
-        # --- Point to the SSL certificate files we just created ---
-        ssl_certificate /etc/letsencrypt/live/chatdemo.levor.io/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/chatdemo.levor.io/privkey.pem;
-
+        ssl_certificate /etc/nginx/certs/fullchain.pem;
+        ssl_certificate_key /etc/nginx/certs/privkey.pem;
+        
         # --- Location for the Chatbot ---
         location / {
             # Add a rule to only serve chatdemo content on its domain
