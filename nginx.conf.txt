@@ -1,49 +1,41 @@
-# C:\master-proxy-infra\nginx.conf
-# A resilient master Nginx config for a phased deployment.
+# C:\master-proxy-infra\nginx.conf - FINAL SECURE VERSION
 
 events {}
 
 http {
-    # --- KEY FIX: Use Docker's internal DNS server for runtime resolution ---
-    resolver 127.0.0.11 valid=5s;
-
-    # --- Server for the existing Chatbot Application ---
-    # It listens for requests to chatdemo.levor.io and forwards them to the
-    # Chatbot's Nginx container, which is named 'nginx-proxy'.
+    # --- Server Block for redirecting all HTTP to HTTPS ---
+    # This is a security best practice.
     server {
         listen 80;
-        server_name chatdemo.levor.io;
+        server_name chatdemo.levor.io labs.levor.io;
+        return 301 https://$host$request_uri;
+    }
 
+    # --- Server Block for handling all secure traffic ---
+    server {
+        listen 443 ssl; # Listen on the secure port
+        server_name chatdemo.levor.io labs.levor.io;
+
+        # --- Point to the SSL certificate files we just created ---
+        ssl_certificate /etc/letsencrypt/live/chatdemo.levor.io/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/chatdemo.levor.io/privkey.pem;
+
+        # --- Location for the Chatbot ---
         location / {
-            # Use a variable to force Nginx to look up the IP at request time.
-            proxy_pass http://nginx-proxy;
+            # Add a rule to only serve chatdemo content on its domain
+            if ($host = chatdemo.levor.io) {
+                proxy_pass http://nginx-proxy;
+            }
+
+            # Add a rule to only serve labs content on its domain
+            if ($host = labs.levor.io) {
+                # This should be the name of your labs container
+                proxy_pass http://techlab-nginx; 
+            }
+
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
         }
-    }
-
-    # --- FUTURE USE: Add your 'labs' application here later ---
-    # When you are ready to deploy the TechLab app, you will add its
-    # server block right here, like this:
-    #
-    # server {
-    #     listen 80;
-    #     server_name labs.levor.io;
-    #
-    #     location / {
-    #         set $techlab_upstream techlab_nginx;
-    #         proxy_pass http://$techlab_upstream;
-    #         proxy_set_header Host $host;
-    #         # ... other headers
-    #     }
-    # }
-
-    # --- SECURITY: Default server to block direct IP access ---
-    server {
-        listen 80 default_server;
-        server_name _;
-        return 444; # Closes the connection immediately.
     }
 }
