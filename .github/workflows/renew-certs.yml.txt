@@ -1,0 +1,45 @@
+# C:\master-proxy-infra\.github\workflows\renew-certs.yml
+
+name: Daily Certificate Sync
+
+on:
+  # This makes the workflow run automatically every day at 1:00 AM UTC.
+  schedule:
+    - cron: "0 1 * * *"
+
+  # This allows you to manually run the workflow from the GitHub Actions tab.
+  workflow_dispatch:
+
+jobs:
+  renew-and-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Let's Encrypt Certificates
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            # Exit immediately if any command fails
+            set -e
+
+            echo "🔔 1/4: Attempting to renew certificates with Certbot..."
+            # This command is safe. It will only renew if the cert is close to expiring.
+            sudo certbot renew
+
+            echo "🔄 2/4: Syncing renewed certificates to the proxy directory..."
+            # --- THIS IS THE KEY FIX ---
+            # Using the `sudo sh -c '...'` wrapper that you correctly identified,
+            # to ensure shell globbing (*) works with sudo permissions.
+            sudo sh -c 'cp -L /etc/letsencrypt/live/chatdemo.levor.io/*.pem /home/dev1master/master-proxy-infra/certs/'
+
+            echo "🔐 3/4: Setting correct file permissions..."
+            # This ensures the files are owned by your user, which is good practice.
+            sudo chown -R dev1master:dev1master /home/dev1master/master-proxy-infra/certs/
+
+            echo "🚀 4/4: Gracefully reloading Nginx to use the new certificate..."
+            # This command reloads Nginx inside the container without any downtime.
+            docker exec master_proxy nginx -s reload
+
+            echo "✅ Certificate sync and reload complete."
