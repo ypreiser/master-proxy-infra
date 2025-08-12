@@ -1,3 +1,9 @@
+# C:\master-proxy-infra\docker-compose.yml
+# This network is the bridge between the master proxy and all applications.
+# It MUST be created manually on the server once: `docker network create master_proxy_network`
+networks:
+  master_proxy_network:
+    external: true
 services:
   master-proxy:
     image: nginx:alpine
