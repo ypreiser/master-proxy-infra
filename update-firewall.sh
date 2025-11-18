@@ -33,5 +33,23 @@ for ip in $CF_IPV6; do
   sudo ufw allow from $ip to any port 80,443 proto tcp comment 'Cloudflare'
 done
 
-echo "✅ Firewall has been reset and is now active, locked down to Cloudflare IPs."
+# Add Green API IPs
+echo "Adding rules for Green API IPs..."
+GREEN_API_IPS=(
+  46.101.109.139
+  51.250.12.167
+  51.250.84.44
+  51.250.95.149
+  89.169.137.216
+  158.160.49.84
+  165.22.93.202
+  167.172.162.71
+  158.160.139.176
+)
+
+for ip in "${GREEN_API_IPS[@]}"; do
+  sudo ufw allow from $ip to any port 80,443 proto tcp comment 'Green API'
+done
+
+echo "✅ Firewall has been reset and is now active, locked down to Cloudflare and Green API IPs."
 sudo ufw status
