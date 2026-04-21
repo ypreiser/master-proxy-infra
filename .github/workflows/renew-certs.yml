@@ -1,11 +1,11 @@
 # C:\master-proxy-infra\.github\workflows\renew-certs.yml
 
-name: Daily Certificate Sync
+name: Weekly Certificate Sync
 
 on:
-  # This makes the workflow run automatically every day at 1:00 AM UTC.
+  # Runs every Sunday at 1:00 AM UTC
   schedule:
-    - cron: "0 1 * * *"
+    - cron: "0 1 * * 0"
 
   # This allows you to manually run the workflow from the GitHub Actions tab.
   workflow_dispatch:
@@ -34,7 +34,7 @@ jobs:
             # --- THIS IS THE KEY FIX ---
             # Using the `sudo sh -c '...'` wrapper that you correctly identified,
             # to ensure shell globbing (*) works with sudo permissions.
-            sudo sh -c 'cp -L /etc/letsencrypt/live/chatdemo.levor.io/*.pem /home/dev1master/master-proxy-infra/certs/'
+            sudo sh -c 'cp -L /etc/letsencrypt/live/chatdemo.levor.io-0001/*.pem /home/dev1master/master-proxy-infra/certs/'
 
             echo "🔐 3/4: Setting correct file permissions..."
             # This ensures the files are owned by your user, which is good practice.
@@ -45,3 +45,19 @@ jobs:
             docker exec master_proxy nginx -s reload
 
             echo "✅ Certificate sync and reload complete."
+
+      - name: Notify success
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: "✅ Cert renewal completed successfully."
+
+      - name: Notify failure
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: "❌ Cert renewal failed! Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
