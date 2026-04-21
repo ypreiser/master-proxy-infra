@@ -25,8 +25,10 @@ jobs:
             set -e
 
             echo "🔔 1/4: Attempting to renew certificates with Certbot..."
-            # This command is safe. It will only renew if the cert is close to expiring.
-            sudo certbot renew
+            # Stop master_proxy so certbot can bind port 80, restart after
+            sudo certbot renew \
+              --pre-hook "docker stop master_proxy" \
+              --post-hook "docker start master_proxy"
 
             echo "🔄 2/4: Syncing renewed certificates to the proxy directory..."
             # --- THIS IS THE KEY FIX ---
