@@ -1,0 +1,35 @@
+# C:\master-proxy-infra\.github\workflows\backup-healthcheck.yml
+
+name: Daily Backup Healthcheck
+
+on:
+  # Runs every day at 7:00 AM UTC (backup runs ~02:00, threshold 36h)
+  schedule:
+    - cron: "0 7 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  check-backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check backup health
+        id: check
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            RESP=$(docker exec backend curl -s http://localhost:3000/health/backup)
+            echo "$RESP"
+            echo "$RESP" | grep -q '"status"[[:space:]]*:[[:space:]]*"healthy"' || exit 1
+
+      - name: Notify unhealthy
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: "❌ Backup healthcheck failed (unhealthy or unreachable). Check: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
