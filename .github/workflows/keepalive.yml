@@ -1,0 +1,24 @@
+# C:\master-proxy-infra\.github\workflows\keepalive.yml
+#
+# Scheduled workflows get auto-disabled after 60 days of no commit activity.
+# All our monitoring is cron-based, so without this the alerts silently stop.
+# keepalive-workflow pushes a dummy commit only when the last commit nears the
+# threshold, resetting GitHub's inactivity clock before the 60-day cutoff.
+
+name: Keepalive
+
+on:
+  schedule:
+    - cron: "0 3 * * 1" # weekly, Monday 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2
