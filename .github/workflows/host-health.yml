@@ -1,0 +1,54 @@
+# C:\master-proxy-infra\.github\workflows\host-health.yml
+
+name: Daily Host Health
+
+on:
+  # Runs every day at 7:15 AM UTC (offset from backup healthcheck)
+  schedule:
+    - cron: "15 7 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  host-health:
+    runs-on: ubuntu-latest
+    steps:
+      # Alerts if the box rebooted in the last ~25h (unplanned reboot = crash/OOM/power).
+      # Daily poll + 25h threshold => at most one alert per reboot, none if uptime > 25h.
+      - name: Check recent reboot
+        id: reboot
+        continue-on-error: true
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          # awk exits 1 (failure) when uptime <= 90000s (~25h)
+          script: awk '{exit !($1>90000)}' /proc/uptime
+
+      - name: Notify recent reboot
+        if: steps.reboot.outcome == 'failure'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: "🔄 Proxy server rebooted within the last day. Investigate if unplanned."
+
+      # /var/run/reboot-required is created by apt when a kernel/security update needs a reboot.
+      - name: Check reboot-required
+        id: reboot_required
+        continue-on-error: true
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: test ! -f /var/run/reboot-required
+
+      - name: Notify reboot-required
+        if: steps.reboot_required.outcome == 'failure'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: "⚠️ Proxy server has a pending reboot (kernel/security update). Schedule a reboot."
