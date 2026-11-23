@@ -1,0 +1,19 @@
+# C:\master-proxy-infra\.github\dependabot.yml
+# Weekly PRs for new nginx image tags and GitHub Action versions (keeps SHA pins current).
+# Merging a PR to master triggers deploy.yml.
+version: 2
+updates:
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # Stay on the nginx stable line (1.30.x); minor bumps would jump to mainline (1.31.x).
+      # When a new stable line ships (e.g. 1.32), bump manually.
+      - dependency-name: "nginx"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

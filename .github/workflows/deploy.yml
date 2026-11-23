@@ -48,3 +48,8 @@ jobs:
             echo "Ensuring master proxy service is up..."
             docker compose up -d
             echo "Master proxy is running."
+
+            # Runs after proxy restart so an apt failure can't block the deploy.
+            echo "Ensuring automatic security updates..."
+            chmod +x ./setup-unattended-upgrades.sh
+            sudo ./setup-unattended-upgrades.sh
