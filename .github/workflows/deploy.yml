@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Sync Files to Server
-        uses: easingthemes/ssh-deploy@734a8611e9919d2b54afd6498990494553b59538 # v6.0.1
+        uses: easingthemes/ssh-deploy@35647dbb6c84e9f4c4ff546acffbfe40e5650576 # v6.0.3
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
