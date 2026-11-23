@@ -1,5 +1,6 @@
 #!/bin/bash
 # C:\master-proxy-infra\setup-unattended-upgrades.sh
+# One-time manual setup on host: cd ~/master-proxy-infra && sudo ./setup-unattended-upgrades.sh
 # Idempotent: enables automatic Ubuntu security updates (default origins = security only).
 # No auto-reboot: host-health.yml alerts via Telegram when /var/run/reboot-required appears.
 
