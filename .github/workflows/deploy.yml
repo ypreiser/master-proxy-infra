@@ -29,11 +29,14 @@ jobs:
           EXCLUDE: "/.github/, /.git/"
 
       - name: Configure Server and Restart Proxy
+        env:
+          PSONO_ADMIN_IP: ${{ secrets.PSONO_ADMIN_IP }}
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          envs: PSONO_ADMIN_IP
           script: |
             set -e
             cd ~/master-proxy-infra
@@ -45,6 +48,37 @@ jobs:
             sudo ./update-firewall.sh
             echo "✅ Firewall configuration updated."
 
+            echo "Generating nginx include files..."
+            mkdir -p generated
+            # Cloudflare real-IP list (only written if fetch looks sane)
+            CF_IPS="$(curl -sf https://www.cloudflare.com/ips-v4; echo; curl -sf https://www.cloudflare.com/ips-v6)"
+            if [ "$(echo "$CF_IPS" | grep -cE '^[0-9a-f:.]+/[0-9]+$')" -ge 10 ]; then
+              { echo "$CF_IPS" | grep -E '^[0-9a-f:.]+/[0-9]+$' | sed 's/.*/set_real_ip_from &;/'
+                echo "real_ip_header CF-Connecting-IP;"; } > generated/cf-realip.conf
+            else
+              echo "⚠️ Cloudflare IP fetch failed, keeping previous cf-realip.conf"
+            fi
+            # Psono admin allow list (secret PSONO_ADMIN_IP, comma/space separated IPs/CIDRs)
+            : > generated/psono-admin-allow.conf
+            for ip in $(echo "${PSONO_ADMIN_IP:-}" | tr ',' ' '); do
+              if echo "$ip" | grep -qE '^[0-9a-fA-F:.]+(/[0-9]+)?$'; then
+                echo "allow $ip;" >> generated/psono-admin-allow.conf
+              else
+                echo "⚠️ Skipping invalid PSONO_ADMIN_IP entry"
+              fi
+            done
+
+            echo "Validating nginx config..."
+            # Fails deploy (before restart) if config/certs are broken, e.g. pass.levor.io cert missing
+            NGINX_IMAGE="$(grep -oE 'nginx:[0-9.]+-alpine' docker-compose.yml)"
+            docker run --rm --network master_proxy_network \
+              -v "$PWD/nginx.conf:/etc/nginx/nginx.conf:ro" \
+              -v "$PWD/certs:/etc/nginx/certs:ro" \
+              -v "$PWD/generated:/etc/nginx/generated:ro" \
+              "$NGINX_IMAGE" nginx -t
+
             echo "Ensuring master proxy service is up..."
             docker compose up -d
+            # Restart so the container picks up the re-synced nginx.conf (rsync replaces the file inode)
+            docker compose restart master-proxy
             echo "Master proxy is running."

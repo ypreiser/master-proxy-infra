@@ -19,5 +19,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       # --- ADD THIS LINE TO MOUNT THE CERTIFICATES ---
       - ./certs:/etc/nginx/certs:ro
+      # Generated on deploy: Cloudflare real-IP list + Psono admin allow list
+      - ./generated:/etc/nginx/generated:ro
     networks:
       - master_proxy_network
