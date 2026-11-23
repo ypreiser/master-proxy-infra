@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Check backup health
         id: check
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -28,7 +28,7 @@ jobs:
 
       - name: Notify unhealthy
         if: failure()
-        uses: appleboy/telegram-action@master
+        uses: appleboy/telegram-action@68ac04bda0e0f4755e24649161566b4b6732cc83 # v1.1.2
         with:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
