@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Sync Files to Server
-        uses: easingthemes/ssh-deploy@main
+        uses: easingthemes/ssh-deploy@734a8611e9919d2b54afd6498990494553b59538 # v6.0.1
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
           REMOTE_HOST: ${{ secrets.SSH_HOST }}
@@ -29,7 +29,7 @@ jobs:
           EXCLUDE: "/.github/, /.git/"
 
       - name: Configure Server and Restart Proxy
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
