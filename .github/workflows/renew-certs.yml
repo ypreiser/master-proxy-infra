@@ -35,6 +35,8 @@ jobs:
             # Using the `sudo sh -c '...'` wrapper that you correctly identified,
             # to ensure shell globbing (*) works with sudo permissions.
             sudo sh -c 'cp -L /etc/letsencrypt/live/chatdemo.levor.io-0001/*.pem /home/dev1master/master-proxy-infra/certs/'
+            sudo mkdir -p /home/dev1master/master-proxy-infra/certs/pass.levor.io
+            sudo sh -c 'cp -L /etc/letsencrypt/live/pass.levor.io/*.pem /home/dev1master/master-proxy-infra/certs/pass.levor.io/'
 
             echo "🔐 3/4: Setting correct file permissions..."
             # This ensures the files are owned by your user, which is good practice.
