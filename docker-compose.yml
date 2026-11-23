@@ -6,8 +6,9 @@ networks:
     external: true
 services:
   master-proxy:
-    # Pinned to a patched NGINX release for CVE-2026-42533 (F5 K000162097).
-    # Fixed in stable 1.30.4 / mainline 1.31.3. Do NOT revert to the floating
+    # Pinned to a patched NGINX release: CVE-2026-42533 (F5 K000162097) and
+    # CVE-2026-123007/-123633/-121810/-123634/-113425 (F5, 2026-11-18).
+    # Fixed in stable 1.30.7 / mainline 1.31.9. Do NOT revert to the floating
     # `nginx:alpine` tag, which gives no guarantee the deployed binary is patched.
     image: nginx:1.30.7-alpine
     container_name: master_proxy
